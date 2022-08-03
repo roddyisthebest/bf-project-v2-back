@@ -3,6 +3,7 @@ import axios from 'axios';
 import userInfoType from '../types/userInfo';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
+import { authToken } from '../middleware/authToken';
 const router = express.Router();
 
 router.get(
@@ -79,6 +80,39 @@ router.post(
     } catch (e) {
       console.log(e);
       next(e);
+    }
+  }
+);
+
+router.get(
+  '/:id',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    try {
+      const user = await User.findOne({
+        where: { id },
+        attributes: ['id', 'oauth', 'name', 'img'],
+        include: [
+          {
+            model: User,
+            as: 'Followings',
+            attributes: ['id'],
+          },
+          {
+            model: User,
+            as: 'Followers',
+            attributes: ['id'],
+          },
+        ],
+      });
+      if (user) {
+        return res.json({ code: 200, meta: user });
+      }
+      return res.json({ code: 404, message: '해당되는 유저가 없습니다.' });
+    } catch (e) {
+      console.error(e);
+      return next(e);
     }
   }
 );

@@ -39,6 +39,7 @@ app.post(
         data,
       });
     } catch (e) {
+      next(e);
       console.log(e);
     }
   }
