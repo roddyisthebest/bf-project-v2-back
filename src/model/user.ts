@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
+import { sequelize } from '.';
 import { Penalty } from './penalty';
 import { Pray } from './pray';
 import { Service } from './service';
@@ -52,7 +53,7 @@ const userInit = (sequelize: Sequelize) => {
       },
       authenticate: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         unique: false,
         defaultValue: false,
       },
@@ -73,13 +74,13 @@ const userInit = (sequelize: Sequelize) => {
       },
       admin: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         unique: false,
         defaultValue: false,
       },
       payed: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         unique: false,
         defaultValue: false,
       },

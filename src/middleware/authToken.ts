@@ -13,11 +13,16 @@ export const authToken = async (
         headers: { Authorization: `Bearer ${req.headers.accesstoken}` },
       }
     );
-    console.log(data.id);
     req.userId = data.id;
     return next();
-  } catch (e) {
-    res.send({ msg: '에러입니다.' });
+  } catch (e: any) {
+    if (e.response.status === 401) {
+      return res.send({
+        msg: '토큰이 만료되었습니다.',
+        code: e.response.status,
+      });
+    }
+
     console.log(e);
   }
 };
