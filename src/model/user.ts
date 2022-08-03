@@ -16,8 +16,10 @@ interface UsersAttributes {
   payed: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  [x: string]: any;
 }
 class User extends Model<UsersAttributes> {
+  [x: string]: any;
   static associate() {
     this.hasMany(Tweet);
     this.hasMany(Penalty);

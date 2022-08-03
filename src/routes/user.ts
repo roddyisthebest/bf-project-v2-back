@@ -107,9 +107,9 @@ router.get(
         ],
       });
       if (user) {
-        return res.json({ code: 200, meta: user });
+        return res.json({ code: 200, payload: user });
       }
-      return res.json({ code: 404, message: '해당되는 유저가 없습니다.' });
+      return res.json({ code: 404, msg: '해당되는 유저가 없습니다.' });
     } catch (e) {
       console.error(e);
       return next(e);
@@ -117,4 +117,35 @@ router.get(
   }
 );
 
+router.post(
+  '/follow',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { isFollow, id } = req.body;
+    console.log(isFollow, id);
+    try {
+      const user = await User.findOne({ where: { id: req.userId } });
+      if (user) {
+        if (isFollow) {
+          await user.addFollowing(parseInt(id, 10));
+          return res.json({
+            code: 200,
+            message: '성공적으로 팔로우 처리 되었습니다.',
+          });
+        } else {
+          await user.removeFollowing(parseInt(id, 10));
+          return res.json({
+            code: 200,
+            msg: '성공적으로 팔로우 취소 되었습니다.',
+          });
+        }
+      } else {
+        return res.status(403).json({ code: 403, msg: '잘못된 접근입니다.' });
+      }
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
 export default router;
