@@ -1,10 +1,11 @@
-import express, { Request, Response, NextFunction, Router } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import userInfoType from '../types/userInfo';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
 import { authToken } from '../middleware/authToken';
 import { Service } from '../model/service';
+import { Penalty } from '../model/penalty';
 const router = express.Router();
 
 router.get(
@@ -221,4 +222,30 @@ router.post(
     }
   }
 );
+
+router.get('/:id/penalty/:lastId', authToken, async (req, res, next) => {
+  const { lastId, id } = req.params;
+
+  try {
+    const where = { id: {}, UserId: id };
+    if (parseInt(lastId, 10)) {
+      where.id = { [Op.lt]: parseInt(lastId, 10) };
+    }
+
+    const penaltys = await Penalty.findAll({
+      where,
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
+    });
+    res.json({
+      code: 200,
+      payload: penaltys,
+      msg: `회원번호 ${id} 유저의 벌금 목록입니다.`,
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+});
 export default router;
