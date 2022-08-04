@@ -33,8 +33,12 @@ router.get(
         return res.status(200).json({
           msg: `${userInfo.nickname}님 안녕하세요!`,
           payload: {
-            ...data,
-            ...exUser,
+            token: {
+              ...data,
+            },
+            user: {
+              ...exUser.dataValues,
+            },
           },
         });
       } else {
@@ -56,8 +60,12 @@ router.get(
         return res.status(200).json({
           msg: `${userInfo.nickname}님 성공적으로 회원등록 되었습니다!`,
           payload: {
-            ...data,
-            ...newUser,
+            token: {
+              ...data,
+            },
+            user: {
+              ...newUser.dataValues,
+            },
           },
         });
       }
