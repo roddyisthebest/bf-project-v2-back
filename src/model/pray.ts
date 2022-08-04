@@ -1,15 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { User } from './user';
 
-interface PrayAttributes {
-  id: number;
-  content: string;
-  weekend: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-class Pray extends Model<PrayAttributes> {
+class Pray extends Model {
   static associate() {
     this.belongsTo(User);
   }

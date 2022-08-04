@@ -7,6 +7,7 @@ import { authToken } from '../middleware/authToken';
 import { Service } from '../model/service';
 import { Penalty } from '../model/penalty';
 import { Tweet } from '../model/tweet';
+import { authId } from '../middleware/authId';
 const router = express.Router();
 
 router.get(
@@ -225,72 +226,100 @@ router.post(
   }
 );
 
-router.get('/:id/penalty/:lastId', authToken, async (req, res, next) => {
-  const { lastId, id } = req.params;
-
-  try {
-    const where = { id: {}, UserId: id };
-    if (parseInt(lastId, 10)) {
-      where.id = { [Op.lt]: parseInt(lastId, 10) };
-    }
-
-    const penaltys = await Penalty.findAll({
-      where,
-      limit: 5,
-      order: [['createdAt', 'DESC']],
-      include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
-    });
-
-    if (penaltys.length === 5) {
-      return res.json({
+router.post(
+  '/:id/check',
+  authToken,
+  authId,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id, payed }: { id: number; payed: boolean } = req.body;
+    try {
+      await User.update({ payed }, { where: { id } });
+      return res.send({
         code: 200,
-        payload: penaltys,
-        msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+        message: '유저의 벌금 제출 설정란이 성공적으로 변경되었습니다.',
       });
-    } else {
-      return res.json({
-        code: 202,
-        payload: penaltys,
-        msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
-      });
+    } catch (e) {
+      console.log(e);
+      next(e);
     }
-  } catch (e) {
-    console.error(e);
-    next(e);
   }
-});
+);
 
-router.get('/:id/tweet/:lastId', authToken, async (req, res, next) => {
-  const { lastId, id } = req.params;
+router.get(
+  '/:id/penalty/:lastId',
+  authToken,
+  authId,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { lastId, id } = req.params;
 
-  try {
-    const where = { id: {}, UserId: id };
-    if (parseInt(lastId, 10)) {
-      where.id = { [Op.lt]: parseInt(lastId, 10) };
-    }
+    try {
+      const where = { id: {}, UserId: id };
+      if (parseInt(lastId, 10)) {
+        where.id = { [Op.lt]: parseInt(lastId, 10) };
+      }
 
-    const tweets = await Tweet.findAll({
-      where,
-      limit: 5,
-      order: [['createdAt', 'DESC']],
-    });
-
-    if (tweets.length === 5) {
-      return res.json({
-        code: 200,
-        payload: tweets,
-        msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+      const penaltys = await Penalty.findAll({
+        where,
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+        include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
       });
-    } else {
-      return res.json({
-        code: 202,
-        payload: tweets,
-        msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
-      });
+
+      if (penaltys.length === 5) {
+        return res.json({
+          code: 200,
+          payload: penaltys,
+          msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 202,
+          payload: penaltys,
+          msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      next(e);
     }
-  } catch (e) {
-    console.error(e);
-    next(e);
   }
-});
+);
+
+router.get(
+  '/:id/tweet/:lastId',
+  authToken,
+  authId,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { lastId, id } = req.params;
+    try {
+      const where = { id: {}, UserId: id };
+      if (parseInt(lastId, 10)) {
+        where.id = { [Op.lt]: parseInt(lastId, 10) };
+      }
+
+      const tweets = await Tweet.findAll({
+        where,
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+      });
+
+      if (tweets.length === 5) {
+        return res.json({
+          code: 200,
+          payload: tweets,
+          msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 202,
+          payload: tweets,
+          msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      next(e);
+    }
+  }
+);
 export default router;
