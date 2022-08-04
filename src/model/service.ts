@@ -2,12 +2,12 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import { User } from './user';
 
 interface ServiceAttributes {
-  id: number;
   tweet: boolean;
   pray: boolean;
   penalty: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  UserId: number;
 }
 
 class Service extends Model<ServiceAttributes> {
@@ -21,10 +21,9 @@ class Service extends Model<ServiceAttributes> {
 const serviceInit = (sequelize: Sequelize) =>
   Service.init(
     {
-      id: {
+      UserId: {
         type: DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: true,
-        primaryKey: true,
+        unique: true,
       },
       tweet: {
         type: DataTypes.BOOLEAN,

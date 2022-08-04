@@ -4,6 +4,7 @@ import userInfoType from '../types/userInfo';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
 import { authToken } from '../middleware/authToken';
+import { Service } from '../model/service';
 const router = express.Router();
 
 router.get(
@@ -45,6 +46,12 @@ router.get(
           authenticate: false,
           admin: false,
           payed: true,
+        });
+        await Service.create({
+          UserId: userInfo.sub,
+          pray: false,
+          penalty: false,
+          tweet: false,
         });
         return res.status(200).json({
           msg: `${userInfo.nickname}님 성공적으로 회원등록 되었습니다!`,
