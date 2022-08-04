@@ -6,6 +6,7 @@ import { Op } from 'sequelize';
 import { authToken } from '../middleware/authToken';
 import { Service } from '../model/service';
 import { Penalty } from '../model/penalty';
+import { Tweet } from '../model/tweet';
 const router = express.Router();
 
 router.get(
@@ -78,6 +79,7 @@ router.get(
 
 router.post(
   '/logout',
+  authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.headers.accesstoken, req.body.userId);
     try {
@@ -238,11 +240,54 @@ router.get('/:id/penalty/:lastId', authToken, async (req, res, next) => {
       order: [['createdAt', 'DESC']],
       include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
     });
-    res.json({
-      code: 200,
-      payload: penaltys,
-      msg: `회원번호 ${id} 유저의 벌금 목록입니다.`,
+
+    if (penaltys.length === 5) {
+      return res.json({
+        code: 200,
+        payload: penaltys,
+        msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+      });
+    } else {
+      return res.json({
+        code: 202,
+        payload: penaltys,
+        msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+});
+
+router.get('/:id/tweet/:lastId', authToken, async (req, res, next) => {
+  const { lastId, id } = req.params;
+
+  try {
+    const where = { id: {}, UserId: id };
+    if (parseInt(lastId, 10)) {
+      where.id = { [Op.lt]: parseInt(lastId, 10) };
+    }
+
+    const tweets = await Tweet.findAll({
+      where,
+      limit: 5,
+      order: [['createdAt', 'DESC']],
     });
+
+    if (tweets.length === 5) {
+      return res.json({
+        code: 200,
+        payload: tweets,
+        msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
+      });
+    } else {
+      return res.json({
+        code: 202,
+        payload: tweets,
+        msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
+      });
+    }
   } catch (e) {
     console.error(e);
     next(e);

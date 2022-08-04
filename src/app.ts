@@ -4,10 +4,16 @@ import { authToken } from '../src/middleware/authToken';
 import { sequelize } from './model';
 import dotenv from 'dotenv';
 import userRoutes from '../src/routes/user';
+import prayRoutes from '../src/routes/pray';
+import penaltyRoutes from '../src/routes/penalty';
+import tweetRoutes from '../src/routes/tweet';
+import path from 'path';
 const app = express();
 dotenv.config();
-app.use(express.json());
 
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/img', express.static(path.join(__dirname, 'uploads')));
 sequelize
   .sync({ force: false })
   .then(() => console.log('데이터 베이스 연결 성공했다리요!'))
@@ -19,6 +25,9 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
   return res.status(200).json({ message: 'hello' });
 });
 app.use('/user', userRoutes);
+app.use('/pray', prayRoutes);
+app.use('/penalty', penaltyRoutes);
+app.use('/tweet', tweetRoutes);
 
 app.get('/test', authToken, async (req, res, next) => {
   console.log(req.userId);

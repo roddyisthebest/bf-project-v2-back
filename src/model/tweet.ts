@@ -1,16 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { User } from './user';
 
-interface TweetAttributes {
-  id: number;
-  content: string;
-  img: string;
-  weekend: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-class Tweet extends Model<TweetAttributes> {
+class Tweet extends Model {
   static associate() {
     this.belongsTo(User);
   }
