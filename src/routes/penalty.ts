@@ -25,7 +25,7 @@ router.get(
       res.json({
         code: 200,
         payload: penaltys,
-        msg: `${moment().day(0).format('YYYY-MM-DD')}의 벌금 목록입니다.`,
+        msg: `${moment().day(0).format('YYYY-MM-DD')} 기간의 벌금 목록입니다.`,
       });
     } catch (e) {
       console.log(e);
