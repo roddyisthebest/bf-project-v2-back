@@ -147,21 +147,26 @@ router.post(
   }
 );
 
-// router.post(
-//   'service',
-//   authToken,
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const {
-//       tweet,
-//       pray,
-//       penalty,
-//     }: { tweet: boolean; pray: boolean; penalty: boolean } = req.body;
-//     try {
-//     } catch (e) {
-//       next(e);
-//     }
-//   }
-// );
+router.put(
+  'service',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {
+      tweet,
+      pray,
+      penalty,
+    }: { tweet: boolean; pray: boolean; penalty: boolean } = req.body;
+    try {
+      await Service.update(
+        { tweet, pray, penalty },
+        { where: { UserId: req.userId } }
+      );
+      return res.json({ msg: '서비스 사용설정이 완료되었습니다!', code: 200 });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
 
 router.post(
   '/follow',
