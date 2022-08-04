@@ -117,17 +117,28 @@ router.get(
   }
 );
 
-router.post('auth/code', authToken, async (req: Request, res: Response) => {
-  const { code }: { code: string } = req.body;
-  if (code === (process.env.AUTH_CODE as string)) {
-    await User.update({ authenticate: true }, { where: { id: req.userId } });
-    return res.json({ msg: '인증되었습니다.', code: 200 });
-  } else {
-    return res
-      .status(401)
-      .json({ msg: '올바르지 않은 코드입니다.', code: 401 });
+router.post(
+  'auth/code',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { code }: { code: string } = req.body;
+    try {
+      if (code === (process.env.AUTH_CODE as string)) {
+        await User.update(
+          { authenticate: true },
+          { where: { id: req.userId } }
+        );
+        return res.json({ msg: '인증되었습니다.', code: 200 });
+      } else {
+        return res
+          .status(401)
+          .json({ msg: '올바르지 않은 코드입니다.', code: 401 });
+      }
+    } catch (e) {
+      next(e);
+    }
   }
-});
+);
 
 router.post(
   '/follow',
