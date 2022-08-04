@@ -147,6 +147,22 @@ router.post(
   }
 );
 
+// router.post(
+//   'service',
+//   authToken,
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const {
+//       tweet,
+//       pray,
+//       penalty,
+//     }: { tweet: boolean; pray: boolean; penalty: boolean } = req.body;
+//     try {
+//     } catch (e) {
+//       next(e);
+//     }
+//   }
+// );
+
 router.post(
   '/follow',
   authToken,

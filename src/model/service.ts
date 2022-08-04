@@ -1,16 +1,9 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { User } from './user';
 
-interface ServiceAttributes {
-  tweet: boolean;
-  pray: boolean;
-  penalty: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-  UserId: number;
-}
+class Service extends Model {
+  [x: string]: any;
 
-class Service extends Model<ServiceAttributes> {
   static associate() {
     this.belongsTo(User, {
       onDelete: 'cascade',
@@ -21,10 +14,6 @@ class Service extends Model<ServiceAttributes> {
 const serviceInit = (sequelize: Sequelize) =>
   Service.init(
     {
-      UserId: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        unique: true,
-      },
       tweet: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
