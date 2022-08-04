@@ -133,7 +133,7 @@ router.get(
 );
 
 router.post(
-  'auth/code',
+  '/auth/code',
   authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     const { code }: { code: string } = req.body;
@@ -156,7 +156,21 @@ router.post(
 );
 
 router.put(
-  'service',
+  '/',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { name } = req.body;
+    try {
+      await User.update({ name }, { where: { id: req.userId } });
+      res.json({ msg: '성공적으로 회원님의 정보가 바뀌었습니다.', code: 200 });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.put(
+  '/service',
   authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     const {
