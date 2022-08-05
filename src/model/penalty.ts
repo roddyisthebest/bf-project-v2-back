@@ -1,15 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { User } from './user';
 
-interface PenaltyAttributes {
-  id: number;
-  paper: number;
-  weekend: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-class Penalty extends Model<PenaltyAttributes> {
+class Penalty extends Model {
   static associate() {
     this.belongsTo(User);
   }

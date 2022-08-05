@@ -34,7 +34,7 @@ router.get(
 
       if (exUser) {
         return res.status(200).json({
-          msg: `${userInfo.nickname}님 안녕하세요!`,
+          msg: `${exUser.name}님 안녕하세요!`,
           payload: {
             token: {
               ...data,
@@ -104,7 +104,7 @@ router.post(
 );
 
 router.get(
-  '/:id',
+  '/:id/info',
   authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -136,11 +136,45 @@ router.get(
   }
 );
 
+router.get(
+  '/myInfo',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      console.log(req.userId);
+      const user = await User.findOne({
+        where: { id: req.userId },
+        attributes: ['id', 'oauth', 'name', 'img'],
+        include: [
+          {
+            model: User,
+            as: 'Followings',
+            attributes: ['id'],
+          },
+          {
+            model: User,
+            as: 'Followers',
+            attributes: ['id'],
+          },
+        ],
+      });
+      if (user) {
+        return res.json({ code: 200, payload: user });
+      }
+      return res.status(401).json({ code: 401, msg: '권한이 없습니다.' });
+    } catch (e) {
+      console.error(e);
+      return next(e);
+    }
+  }
+);
+
 router.post(
   '/auth/code',
   authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     const { code }: { code: string } = req.body;
+    console.log(code);
     try {
       if (code === (process.env.AUTH_CODE as string)) {
         await User.update(
