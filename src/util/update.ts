@@ -100,4 +100,9 @@ const update = () =>
     }
   });
 
-// console.log(weekOfMonth(nowDate) + '주차');
+const alarm = () =>
+  schedule.scheduleJob('0 30 11 * * SAT', async function () {
+    // 푸시 알림 관련 코드 기재
+  });
+
+export { update };

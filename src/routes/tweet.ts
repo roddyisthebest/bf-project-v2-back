@@ -24,6 +24,7 @@ const upload = multer({
       cb(null, `src/uploads`);
     },
     filename(req, file, cb) {
+      console.log(file);
       const ext = path.extname(file.originalname);
       cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
     },
@@ -36,7 +37,9 @@ router.post(
   authToken,
   upload.single('img'),
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body);
     try {
+      console.log(req.file);
       const img = req.file?.path as string;
       const { content: pureContent } = req.body;
       const content = sanitizeHtml(pureContent);
@@ -76,6 +79,7 @@ router.post(
       }
 
       await Tweet.create({
+        UserId: req.userId,
         content: content && content,
         img: img && img.replace('uploads', 'img'),
         weekend: moment().day(0).format('YYYY-MM-DD'),

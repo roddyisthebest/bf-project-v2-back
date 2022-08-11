@@ -10,11 +10,6 @@ class Tweet extends Model {
 const tweetInit = (sequelize: Sequelize) =>
   Tweet.init(
     {
-      id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: false,
-        primaryKey: true,
-      },
       content: {
         type: DataTypes.STRING,
         allowNull: true,

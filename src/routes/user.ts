@@ -26,6 +26,7 @@ router.get(
         }
       );
 
+      console.log('요청!');
       const exUser = await User.findOne({
         where: {
           [Op.or]: [{ id: userInfo.sub }, { name: userInfo.nickname }],

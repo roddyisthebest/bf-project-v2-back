@@ -16,6 +16,7 @@ export const authToken = async (
     req.userId = data.id;
     return next();
   } catch (e: any) {
+    console.log(e.response);
     if (e.response.status === 401) {
       return res.send({
         msg: '토큰이 만료되었습니다.',
