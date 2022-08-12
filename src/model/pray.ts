@@ -10,11 +10,6 @@ class Pray extends Model {
 const prayInit = (sequelize: Sequelize) =>
   Pray.init(
     {
-      id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: false,
-        primaryKey: true,
-      },
       content: {
         type: DataTypes.STRING,
         allowNull: false,

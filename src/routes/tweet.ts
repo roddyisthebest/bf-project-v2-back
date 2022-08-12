@@ -4,6 +4,7 @@ import { User } from '../model/user';
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { authToken } from '../middleware/authToken';
+import { authUser } from '../middleware/authUser';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -34,7 +35,6 @@ const upload = multer({
 
 router.post(
   '/',
-  authToken,
   upload.single('img'),
   async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.body);
@@ -94,16 +94,17 @@ router.post(
 
 router.get(
   '/:lastId',
-  authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const where = { id: {} };
-      if (parseInt(req.params.lastId, 10)) {
-        where.id = { [Op.lt]: parseInt(req.params.lastId, 10) };
+      const lastId = parseInt(req.params.lastId, 10);
+
+      if (lastId !== -1) {
+        where.id = { [Op.lt]: lastId };
       }
 
       const tweets = await Tweet.findAll({
-        where,
+        where: lastId === -1 ? {} : where,
         limit: 5,
         order: [['createdAt', 'DESC']],
         include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
@@ -126,7 +127,6 @@ router.get(
 
 router.delete(
   '/:id',
-  authToken,
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {

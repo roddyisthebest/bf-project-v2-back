@@ -1,6 +1,7 @@
 import axios from 'axios';
 import express, { Request, Response, NextFunction } from 'express';
 import { authToken } from '../src/middleware/authToken';
+import { authUser } from './middleware/authUser';
 import { sequelize } from './model';
 import dotenv from 'dotenv';
 import userRoutes from '../src/routes/user';
@@ -9,9 +10,9 @@ import penaltyRoutes from '../src/routes/penalty';
 import tweetRoutes from '../src/routes/tweet';
 import tokenRoutes from '../src/routes/token';
 import path from 'path';
-import moment from 'moment';
 import cors from 'cors';
 import { update } from './util/update';
+
 const app = express();
 dotenv.config();
 
@@ -32,9 +33,9 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
   return res.status(200).json({ message: 'hello' });
 });
 app.use('/user', userRoutes);
-app.use('/pray', prayRoutes);
-app.use('/penalty', penaltyRoutes);
-app.use('/tweet', tweetRoutes);
+app.use('/pray', authToken, authUser, prayRoutes);
+app.use('/penalty', authToken, authUser, penaltyRoutes);
+app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);

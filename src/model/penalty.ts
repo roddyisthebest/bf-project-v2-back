@@ -10,11 +10,6 @@ class Penalty extends Model {
 const penaltyInit = (sequelize: Sequelize) =>
   Penalty.init(
     {
-      id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: true,
-        primaryKey: true,
-      },
       paper: {
         type: DataTypes.INTEGER,
         allowNull: false,

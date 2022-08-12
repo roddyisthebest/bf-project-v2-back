@@ -8,6 +8,8 @@ import { Service } from '../model/service';
 import { Penalty } from '../model/penalty';
 import { Tweet } from '../model/tweet';
 import { authId } from '../middleware/authId';
+import { authUser } from '../middleware/authUser';
+import { Pray } from '../model/pray';
 const router = express.Router();
 
 router.get(
@@ -82,6 +84,7 @@ router.get(
 router.post(
   '/logout',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.headers.accesstoken, req.body.userId);
     try {
@@ -107,6 +110,7 @@ router.post(
 router.get(
   '/:id/info',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
@@ -140,6 +144,7 @@ router.get(
 router.get(
   '/myInfo',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       console.log(req.userId);
@@ -156,6 +161,9 @@ router.get(
             model: User,
             as: 'Followers',
             attributes: ['id'],
+          },
+          {
+            model: Service,
           },
         ],
       });
@@ -197,6 +205,7 @@ router.post(
 router.put(
   '/',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     const { name } = req.body;
     try {
@@ -211,6 +220,7 @@ router.put(
 router.put(
   '/service',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     const {
       tweet,
@@ -232,6 +242,7 @@ router.put(
 router.post(
   '/follow',
   authToken,
+  authUser,
   async (req: Request, res: Response, next: NextFunction) => {
     const { isFollow, id } = req.body;
     console.log(isFollow, id);
@@ -264,6 +275,7 @@ router.post(
 router.post(
   '/:id/check',
   authToken,
+  authUser,
   authId,
   async (req: Request, res: Response, next: NextFunction) => {
     const { id, payed }: { id: number; payed: boolean } = req.body;
@@ -281,23 +293,24 @@ router.post(
 );
 
 router.get(
-  '/:id/penalty/:lastId',
+  '/:id/penaltys/:lastId',
   authToken,
+  authUser,
   authId,
   async (req: Request, res: Response, next: NextFunction) => {
-    const { lastId, id } = req.params;
+    const { lastId: lstId, id } = req.params;
 
     try {
       const where = { id: {}, UserId: id };
-      if (parseInt(lastId, 10)) {
-        where.id = { [Op.lt]: parseInt(lastId, 10) };
+      const lastId = parseInt(lstId, 10);
+      if (lastId && lastId !== -1) {
+        where.id = { [Op.lt]: lastId };
       }
 
       const penaltys = await Penalty.findAll({
         where,
         limit: 5,
         order: [['createdAt', 'DESC']],
-        include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
       });
 
       if (penaltys.length === 5) {
@@ -321,15 +334,17 @@ router.get(
 );
 
 router.get(
-  '/:id/tweet/:lastId',
+  '/:id/tweets/:lastId',
   authToken,
+  authUser,
   authId,
   async (req: Request, res: Response, next: NextFunction) => {
-    const { lastId, id } = req.params;
+    const { lastId: lstId, id } = req.params;
+    const lastId = parseInt(lstId, 10);
     try {
       const where = { id: {}, UserId: id };
-      if (parseInt(lastId, 10)) {
-        where.id = { [Op.lt]: parseInt(lastId, 10) };
+      if (lastId && lastId !== -1) {
+        where.id = { [Op.lt]: lastId };
       }
 
       const tweets = await Tweet.findAll({
@@ -349,6 +364,46 @@ router.get(
           code: 202,
           payload: tweets,
           msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/:id/prays/:lastId',
+  authToken,
+  authUser,
+  authId,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { lastId: lstId, id } = req.params;
+    const lastId = parseInt(lstId, 10);
+    try {
+      const where = { id: {}, UserId: id };
+      if (lastId && lastId !== -1) {
+        where.id = { [Op.lt]: lastId };
+      }
+
+      const prays = await Pray.findAll({
+        where,
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+      });
+
+      if (prays.length === 5) {
+        return res.json({
+          code: 200,
+          payload: prays,
+          msg: `회원번호 ${id} 유저의 기도제목 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 202,
+          payload: prays,
+          msg: `회원번호 ${id} 유저의 마지막 페이지 기도제목 목록입니다.`,
         });
       }
     } catch (e) {
