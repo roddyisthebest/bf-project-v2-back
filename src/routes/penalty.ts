@@ -3,18 +3,28 @@ import { Penalty } from '../model/penalty';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
 import moment from 'moment';
+import { Service } from '../model/service';
 
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const penaltys = await User.findAll({
-      include: {
-        model: Penalty,
-        where: {
-          weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
+      include: [
+        {
+          model: Penalty,
+          where: {
+            weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
+          },
         },
-      },
+        {
+          model: Service,
+          where: {
+            penalty: { [Op.ne]: false },
+          },
+          attributes: [],
+        },
+      ],
     });
 
     res.json({

@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { Pray } from '../model/pray';
 import sanitizeHtml from 'sanitize-html';
+import { Service } from '../model/service';
 
 const router = express.Router();
 
@@ -19,6 +20,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
           },
           order: [['createdAt', 'DESC']],
+        },
+        {
+          model: Service,
+          where: {
+            pray: { [Op.ne]: false },
+          },
+          attributes: [],
         },
       ],
     });
@@ -50,6 +58,13 @@ router.get(
               weekend: { [Op.eq]: weekend },
             },
             order: [['createdAt', 'DESC']],
+          },
+          {
+            model: Service,
+            where: {
+              pray: { [Op.ne]: false },
+            },
+            attributes: [],
           },
         ],
       });
@@ -97,6 +112,18 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   const content = sanitizeHtml(pureContent);
 
   try {
+    const user: any = await User.findOne({
+      where: { id: req.userId },
+      include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
+    });
+
+    if (!user) {
+      return res.status(402).json({
+        code: 402,
+        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+      });
+    }
+
     const pray: any = await Pray.create({
       UserId: req.userId,
       weekend: moment().day(0).format('YYYY-MM-DD'),
@@ -121,6 +148,17 @@ router.put('/', async (req: Request, res: Response, next: NextFunction) => {
   const content = sanitizeHtml(pureContent);
 
   try {
+    const user: any = await User.findOne({
+      where: { id: req.userId },
+      include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
+    });
+
+    if (!user) {
+      return res.status(402).json({
+        code: 402,
+        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+      });
+    }
     await Pray.update({ content }, { where: { id } });
     return res.send({
       code: 200,

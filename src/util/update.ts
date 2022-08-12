@@ -9,11 +9,11 @@ import { Penalty } from '../model/penalty';
 import { Pray } from '../model/pray';
 
 const weekOfMonth = (m: any) =>
-  m.week() - moment(m).startOf('month').week() + 1;
+  moment(m).week() - moment(m).startOf('month').week() + 1;
 // const nowDate = moment('2022-03-06');
 
 const update = () =>
-  schedule.scheduleJob('0 0 0 * * SUN', async function () {
+  schedule.scheduleJob('0 9 16 * * FRI', async function () {
     try {
       const users = await User.findAll({
         where: { admin: { [Op.not]: true } },
@@ -26,8 +26,8 @@ const update = () =>
 
       const lastWeekend = moment(yesterday).day(0).format('YYYY-MM-DD');
       const weekend = moment().day(0).format('YYYY-MM-DD');
-      let filteredUsers = users.filter((e: any) => e.Service.penalty);
-      filteredUsers.map(async (user) => {
+      let penaltyUsers = users.filter((e: any) => e.Service.penalty);
+      penaltyUsers.map(async (user) => {
         // 전날 weekend로 특정 유저의 게시물 가져오기
         let tweetsInWeek = await Tweet.findAll({
           where: {
@@ -79,6 +79,10 @@ const update = () =>
             },
           }
         );
+      });
+      let prayUsers = users.filter((e: any) => e.Service.pray);
+
+      prayUsers.map(async (user) => {
         await Pray.create({
           UserId: user.id,
           weekend: moment().day(0).format('YYYY-MM-DD'),
@@ -86,6 +90,8 @@ const update = () =>
         });
       });
 
+      console.log(weekend);
+      console.log(weekOfMonth(weekend));
       if (weekOfMonth(weekend) === 2 || weekOfMonth(weekend) === 3) {
         const tweets = await Tweet.findAll();
         tweets.map((tweet: any) => {

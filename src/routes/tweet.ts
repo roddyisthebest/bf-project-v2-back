@@ -11,6 +11,7 @@ import fs from 'fs';
 import sanitizeHtml from 'sanitize-html';
 import { Tweet } from '../model/tweet';
 import userType from '../types/user';
+import { Service } from '../model/service';
 const router = express.Router();
 
 try {
@@ -37,9 +38,12 @@ router.post(
   '/',
   upload.single('img'),
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body);
     try {
-      console.log(req.file);
+      const user: any = await User.findOne({
+        where: { id: req.userId },
+        include: [{ model: Service }],
+      });
+
       const img = req.file?.path as string;
       const { content: pureContent } = req.body;
       const content = sanitizeHtml(pureContent);
@@ -50,6 +54,20 @@ router.post(
         return res
           .status(403)
           .json({ msg: '잘못된 형식의 data입니다.', code: 403 });
+      }
+
+      if (!user.Service.tweet) {
+        fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
+        if (error) {
+          return res
+            .status(500)
+            .json({ code: 500, message: '파일 삭제 오류입니다.' });
+        } else {
+          return res.status(402).json({
+            code: 402,
+            message: `${user.name}님은 게시글을 업로드하는 서비스를 이용하지 않으셨습니다.`,
+          });
+        }
       }
 
       const alreadyTweet = await Tweet.findOne({
