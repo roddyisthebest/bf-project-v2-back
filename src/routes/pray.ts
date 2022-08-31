@@ -8,56 +8,28 @@ import { Service } from '../model/service';
 
 const router = express.Router();
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const prayList = await User.findAll({
-      where: { admin: { [Op.not]: true } },
-      attributes: ['id', 'img', 'name'],
-      include: [
-        {
-          model: Pray,
-          where: {
-            weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
-          },
-          order: [['createdAt', 'DESC']],
-        },
-        {
-          model: Service,
-          where: {
-            pray: { [Op.ne]: false },
-          },
-          attributes: [],
-        },
-      ],
-    });
-    res.json({
-      code: 200,
-      payload: prayList,
-      msg: `${moment()
-        .day(0)
-        .format('YYYY-MM-DD')} 기간의 기도제목 목록입니다.`,
-    });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-});
-
 router.get(
-  '/:weekend',
+  '/:lastId',
   async (req: Request, res: Response, next: NextFunction) => {
-    const { weekend } = req.params;
+    const where = { id: {}, admin: { [Op.not]: true } };
+    const lastId = parseInt(req.params.lastId, 10);
+    if (lastId !== -1) {
+      where.id = { [Op.lt]: lastId };
+    }
+
     try {
       const prayList = await User.findAll({
-        where: { admin: { [Op.not]: true } },
+        where: lastId === -1 ? {} : where,
+        limit: 5,
         attributes: ['id', 'img', 'name'],
+        order: [['id', 'DESC']],
         include: [
           {
             model: Pray,
             where: {
-              weekend: { [Op.eq]: weekend },
+              weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
             },
-            order: [['createdAt', 'DESC']],
+            order: [['id', 'DESC']],
           },
           {
             model: Service,
@@ -68,11 +40,23 @@ router.get(
           },
         ],
       });
-      res.json({
-        code: 200,
-        payload: prayList,
-        msg: `${weekend} 기간의 기도제목 목록입니다.`,
-      });
+      if (prayList.length === 5) {
+        return res.json({
+          code: 200,
+          payload: prayList,
+          msg: `${moment()
+            .day(0)
+            .format('YYYY-MM-DD')} 기간의 기도제목 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 202,
+          payload: prayList,
+          msg: `${moment()
+            .day(0)
+            .format('YYYY-MM-DD')} 기간의 마지막 기도제목 목록입니다.`,
+        });
+      }
     } catch (e) {
       console.log(e);
       next(e);
@@ -81,12 +65,63 @@ router.get(
 );
 
 router.get(
-  '/check/:weekend',
+  '/:lastId/weekend/:weekend',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { weekend } = req.params;
+    const where = { id: {}, admin: { [Op.not]: true } };
+
+    const lastId = parseInt(req.params.lastId, 10);
+    if (lastId !== -1) {
+      where.id = { [Op.lt]: lastId };
+    }
+    try {
+      const prayList = await User.findAll({
+        where: lastId === -1 ? {} : where,
+        attributes: ['id', 'img', 'name'],
+        order: [['id', 'DESC']],
+        limit: 5,
+        include: [
+          {
+            model: Pray,
+            where: {
+              weekend: { [Op.eq]: weekend },
+            },
+            order: [['createdAt', 'DESC']],
+          },
+        ],
+      });
+      if (prayList.length === 5) {
+        return res.json({
+          code: 200,
+          payload: prayList,
+          msg: `${moment()
+            .day(0)
+            .format('YYYY-MM-DD')} 기간의 기도제목 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 202,
+          payload: prayList,
+          msg: `${moment()
+            .day(0)
+            .format('YYYY-MM-DD')} 기간의 마지막 기도제목 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/weekend/:weekend/check',
   async (req: Request, res: Response, next: NextFunction) => {
     const { weekend } = req.params;
     try {
       const prayList = await Pray.findAll({
         where: { weekend: { [Op.eq]: weekend } },
+        limit: 1,
       });
 
       if (prayList.length !== 0) {
@@ -95,8 +130,8 @@ router.get(
           msg: `${weekend} 기간의 기도제목이 존재합니다.`,
         });
       } else {
-        return res.status(404).json({
-          code: 404,
+        return res.status(202).json({
+          code: 202,
           msg: `${weekend} 기간의 기도제목이 존재하지 않습니다.`,
         });
       }
@@ -108,12 +143,12 @@ router.get(
 );
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  const { content: pureContent } = req.body;
+  const { content: pureContent, id } = req.body;
   const content = sanitizeHtml(pureContent);
 
   try {
     const user: any = await User.findOne({
-      where: { id: req.userId },
+      where: { id },
       include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
     });
 
@@ -125,7 +160,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const pray: any = await Pray.create({
-      UserId: req.userId,
+      UserId: user.id,
       weekend: moment().day(0).format('YYYY-MM-DD'),
       content,
     });
@@ -134,6 +169,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       msg: '형제자매님의 기도제목이 성공적으로 db에 저장되었으니 기도해주세요.',
       payload: {
         id: pray.id,
+        weekend: pray.weekend,
+        content: pray.content,
       },
     });
   } catch (e) {
@@ -143,13 +180,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.put('/', async (req: Request, res: Response, next: NextFunction) => {
-  const { id, content: pureContent } = req.body;
+  const { id, content: pureContent, userId } = req.body;
   console.log(req.body);
   const content = sanitizeHtml(pureContent);
 
   try {
     const user: any = await User.findOne({
-      where: { id: req.userId },
+      where: { id: userId },
       include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
     });
 

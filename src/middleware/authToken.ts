@@ -1,19 +1,23 @@
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 
+let userId: number;
 export const authToken = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  const accessToken = req.headers.authorization;
+
   try {
     const { data } = await axios.get(
       'https://kapi.kakao.com/v1/user/access_token_info',
       {
-        headers: { Authorization: `Bearer ${req.headers.accesstoken}` },
+        headers: { Authorization: `${accessToken}` },
       }
     );
     req.userId = data.id;
+    userId = data.id;
     return next();
   } catch (e: any) {
     if (e.response.data.code === -401) {
@@ -36,3 +40,5 @@ export const authToken = async (
     console.log(e);
   }
 };
+
+export { userId };

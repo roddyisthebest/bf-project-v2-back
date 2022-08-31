@@ -38,13 +38,14 @@ router.post(
   '/',
   upload.single('img'),
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log('wow!');
     try {
       const user: any = await User.findOne({
         where: { id: req.userId },
         include: [{ model: Service }],
       });
 
-      const img = req.file?.path as string;
+      const img = req.file?.path || ('' as string);
       const { content: pureContent } = req.body;
       const content = sanitizeHtml(pureContent);
 
@@ -82,7 +83,7 @@ router.post(
         },
       });
 
-      if (alreadyTweet) {
+      if (false) {
         fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
         if (error) {
           return res

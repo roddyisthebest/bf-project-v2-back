@@ -86,14 +86,13 @@ router.post(
   authToken,
   authUser,
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.headers.accesstoken, req.body.userId);
     try {
       await axios.post(
         `https://kapi.kakao.com/v1/user/logout`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${req.headers.accesstoken}`,
+            Authorization: `${req.headers.authorization}`,
           },
         }
       );
@@ -116,7 +115,7 @@ router.get(
     try {
       const user = await User.findOne({
         where: { id },
-        attributes: ['id', 'oauth', 'name', 'img'],
+        attributes: ['id', 'oauth', 'name', 'img', 'createdAt', 'updatedAt'],
         include: [
           {
             model: User,
@@ -142,7 +141,7 @@ router.get(
 );
 
 router.get(
-  '/myInfo',
+  '/',
   authToken,
   authUser,
   async (req: Request, res: Response, next: NextFunction) => {
@@ -150,7 +149,7 @@ router.get(
       console.log(req.userId);
       const user = await User.findOne({
         where: { id: req.userId },
-        attributes: ['id', 'oauth', 'name', 'img'],
+        attributes: ['id', 'oauth', 'name', 'img', 'createdAt', 'updatedAt'],
         include: [
           {
             model: User,
@@ -254,12 +253,14 @@ router.post(
           return res.json({
             code: 200,
             message: '성공적으로 팔로우 처리 되었습니다.',
+            payload: { id },
           });
         } else {
           await user.removeFollowing(parseInt(id, 10));
           return res.json({
-            code: 200,
+            code: 201,
             msg: '성공적으로 팔로우 취소 되었습니다.',
+            payload: { id },
           });
         }
       } else {
@@ -273,17 +274,16 @@ router.post(
 );
 
 router.post(
-  '/:id/check',
+  '/check',
   authToken,
-  authUser,
-  authId,
   async (req: Request, res: Response, next: NextFunction) => {
     const { id, payed }: { id: number; payed: boolean } = req.body;
     try {
+      console.log(payed);
       await User.update({ payed }, { where: { id } });
       return res.send({
         code: 200,
-        message: '유저의 벌금 제출 설정란이 성공적으로 변경되었습니다.',
+        msg: '유저의 벌금 제출 설정란이 성공적으로 변경되었습니다.',
       });
     } catch (e) {
       console.log(e);
@@ -308,9 +308,9 @@ router.get(
       }
 
       const penaltys = await Penalty.findAll({
-        where,
-        limit: 5,
-        order: [['createdAt', 'DESC']],
+        where: lastId === -1 ? { UserId: id } : where,
+        limit: 10,
+        order: [['id', 'DESC']],
       });
 
       if (penaltys.length === 5) {
@@ -341,6 +341,8 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
     const lastId = parseInt(lstId, 10);
+
+    console.log(lastId, id);
     try {
       const where = { id: {}, UserId: id };
       if (lastId && lastId !== -1) {
@@ -348,8 +350,14 @@ router.get(
       }
 
       const tweets = await Tweet.findAll({
-        where,
+        where: lastId === -1 ? { UserId: id } : where,
         limit: 5,
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'img', 'name', 'oauth', 'createdAt'],
+          },
+        ],
         order: [['createdAt', 'DESC']],
       });
 
@@ -388,8 +396,8 @@ router.get(
       }
 
       const prays = await Pray.findAll({
-        where,
-        limit: 5,
+        where: lastId === -1 ? { UserId: id } : where,
+        limit: 15,
         order: [['createdAt', 'DESC']],
       });
 

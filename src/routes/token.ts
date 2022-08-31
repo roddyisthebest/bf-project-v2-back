@@ -17,17 +17,26 @@ router.post(
   '/refresh',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log(req.headers.refreshtoken);
+      const { refreshToken } = req.body;
       const { data } = await axios.post(
-        `https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=8e90fd53b25935044191bd3ebd2bf726&&refresh_token=${req.headers.refreshtoken}`
+        `https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=8e90fd53b25935044191bd3ebd2bf726&&refresh_token=${refreshToken}`
       );
+      console.log('토큰갱신');
       res.send({
         msg: '토큰이 성공적으로 갱신되었습니다!',
-        data,
+        payload: { ...data },
       });
-    } catch (e) {
-      next(e);
-      console.log(e);
+    } catch (e: any) {
+      if (e.response.status === 401 && e.response.data.code === 'A0002') {
+        res.status(401).json({
+          msg: 'refresh토큰이 만료되었습니다. 다시 로그인해주세요.',
+        });
+      } else {
+        console.log('400에러');
+        res.status(400).json({
+          msg: '에러입니다!',
+        });
+      }
     }
   }
 );

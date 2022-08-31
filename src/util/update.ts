@@ -106,9 +106,4 @@ const update = () =>
     }
   });
 
-const alarm = () =>
-  schedule.scheduleJob('0 30 11 * * SAT', async function () {
-    // 푸시 알림 관련 코드 기재
-  });
-
 export { update };
