@@ -24,7 +24,7 @@ import fs from 'fs';
 import https from 'https';
 
 const HTTP_PORT = 8080;
-const HTTPS_PORT = 8443;
+const HTTPS_PORT = 443;
 
 const options = {
   key: fs.readFileSync('src/localhost-key.pem'),
