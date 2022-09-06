@@ -53,8 +53,8 @@ router.post(
 
       if (!(img || content)) {
         return res
-          .status(403)
-          .json({ msg: '잘못된 형식의 data입니다.', code: 403 });
+          .status(400)
+          .json({ msg: '잘못된 형식의 data입니다.', code: 'bad request' });
       }
 
       if (!user.Service.tweet) {
@@ -62,11 +62,11 @@ router.post(
         if (error) {
           return res
             .status(500)
-            .json({ code: 500, message: '파일 삭제 오류입니다.' });
+            .json({ code: 'server error', message: '파일 삭제 오류입니다.' });
         } else {
-          return res.status(402).json({
-            code: 402,
-            message: `${user.name}님은 게시글을 업로드하는 서비스를 이용하지 않으셨습니다.`,
+          return res.status(403).json({
+            code: 'forbidden',
+            msg: `${user.name}님은 게시글을 업로드하는 서비스를 이용하지 않으셨습니다.`,
           });
         }
       }
@@ -83,16 +83,16 @@ router.post(
         },
       });
 
-      if (false) {
+      if (alreadyTweet) {
         fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
         if (error) {
           return res
             .status(500)
-            .json({ code: 500, message: '파일 삭제 오류입니다.' });
+            .json({ code: 'server error', msg: '파일 삭제 오류입니다.' });
         } else {
-          return res.status(403).json({
-            code: 403,
-            message: '오늘 업로드 된 게시물이 존재합니다.',
+          return res.status(406).json({
+            code: 'forbidden',
+            msg: '오늘 업로드 된 게시물이 존재합니다.',
           });
         }
       }
@@ -104,7 +104,10 @@ router.post(
         weekend: moment().day(0).format('YYYY-MM-DD'),
       });
 
-      return res.json({ code: 200, msg: '성공적으로 업로드 되었습니다.' });
+      return res.json({
+        code: 'success',
+        msg: '성공적으로 업로드 되었습니다.',
+      });
     } catch (e) {
       next(e);
     }
@@ -129,10 +132,10 @@ router.get(
         include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
       });
       if (tweets.length === 5) {
-        return res.json({ code: 200, payload: tweets });
+        return res.json({ code: 'success', payload: tweets });
       } else {
         return res.json({
-          code: 202,
+          code: 'last data',
           payload: tweets,
           msg: '마지막 page의 게시글 목록 입니다.',
         });
@@ -168,16 +171,16 @@ router.delete(
 
         if (!error) {
           return res.json({
-            code: 200,
+            code: 'success',
             message: '해당 트윗의 삭제가 완료되었습니다!',
           });
         } else {
-          return res.status(404).send({ code: 404, msg: error });
+          return res.status(404).send({ code: 'not found', msg: error });
         }
       } else {
         return res
           .status(403)
-          .json({ code: 403, msg: '권한이 없습니다. 꺼지세요' });
+          .json({ code: 'forbidden', msg: '권한이 없습니다. 꺼지세요' });
       }
     } catch (e) {
       console.error(e);

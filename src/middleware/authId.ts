@@ -9,7 +9,7 @@ export const authId = async (
   if (req.userId !== parseInt(req.params.id, 10)) {
     return res.status(401).json({
       msg: '잘못된 접근입니다.',
-      code: 401,
+      code: 'wrong access',
     });
   }
   next();

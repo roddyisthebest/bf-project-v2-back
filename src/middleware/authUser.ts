@@ -13,9 +13,9 @@ export const authUser = async (
     });
 
     if (!user?.authenticate)
-      return res.status(401).json({
+      return res.status(403).json({
         msg: '자격증명이 미이행 상태입니다. 자격증명을 해주세요.',
-        code: 401,
+        code: 'forbidden',
       });
   }
   next();

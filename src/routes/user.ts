@@ -98,7 +98,7 @@ router.post(
       );
       res
         .status(200)
-        .json({ msg: '성공적으로 로그아웃 되었습니다.', code: 200 });
+        .json({ msg: '성공적으로 로그아웃 되었습니다.', code: 'success' });
     } catch (e) {
       console.log(e);
       next(e);
@@ -130,9 +130,9 @@ router.get(
         ],
       });
       if (user) {
-        return res.json({ code: 200, payload: user });
+        return res.json({ code: 'success', payload: user });
       }
-      return res.json({ code: 404, msg: '해당되는 유저가 없습니다.' });
+      return res.json({ code: 'not found', msg: '해당되는 유저가 없습니다.' });
     } catch (e) {
       console.error(e);
       return next(e);
@@ -167,9 +167,11 @@ router.get(
         ],
       });
       if (user) {
-        return res.json({ code: 200, payload: user });
+        return res.json({ code: 'success', payload: user });
       }
-      return res.status(401).json({ code: 401, msg: '권한이 없습니다.' });
+      return res
+        .status(401)
+        .json({ code: 'wrong access', msg: '권한이 없습니다.' });
     } catch (e) {
       console.error(e);
       return next(e);
@@ -189,11 +191,12 @@ router.post(
           { authenticate: true },
           { where: { id: req.userId } }
         );
-        return res.json({ msg: '인증되었습니다.', code: 200 });
+        return res.json({ msg: '인증되었습니다.', code: 'success' });
       } else {
-        return res
-          .status(401)
-          .json({ msg: '올바르지 않은 코드입니다.', code: 401 });
+        return res.status(401).json({
+          msg: '올바르지 않은 코드입니다.',
+          code: 'wrong information',
+        });
       }
     } catch (e) {
       next(e);
@@ -209,7 +212,10 @@ router.put(
     const { name } = req.body;
     try {
       await User.update({ name }, { where: { id: req.userId } });
-      res.json({ msg: '성공적으로 회원님의 정보가 바뀌었습니다.', code: 200 });
+      res.json({
+        msg: '성공적으로 회원님의 정보가 바뀌었습니다.',
+        code: 'success',
+      });
     } catch (e) {
       next(e);
     }
@@ -231,7 +237,10 @@ router.put(
         { tweet, pray, penalty },
         { where: { UserId: req.userId } }
       );
-      return res.json({ msg: '서비스 사용설정이 완료되었습니다!', code: 200 });
+      return res.json({
+        msg: '서비스 사용설정이 완료되었습니다!',
+        code: 'success',
+      });
     } catch (e) {
       next(e);
     }
@@ -251,20 +260,22 @@ router.post(
         if (isFollow) {
           await user.addFollowing(parseInt(id, 10));
           return res.json({
-            code: 200,
+            code: 'success',
             message: '성공적으로 팔로우 처리 되었습니다.',
             payload: { id },
           });
         } else {
           await user.removeFollowing(parseInt(id, 10));
           return res.json({
-            code: 201,
+            code: 'success',
             msg: '성공적으로 팔로우 취소 되었습니다.',
             payload: { id },
           });
         }
       } else {
-        return res.status(403).json({ code: 403, msg: '잘못된 접근입니다.' });
+        return res
+          .status(401)
+          .json({ code: 'Unauthorized', msg: '잘못된 접근입니다.' });
       }
     } catch (e) {
       console.log(e);
@@ -282,9 +293,23 @@ router.post(
       console.log(payed);
       await User.update({ payed }, { where: { id } });
       return res.send({
-        code: 200,
+        code: 'success',
         msg: '유저의 벌금 제출 설정란이 성공적으로 변경되었습니다.',
       });
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+
+router.post(
+  '/phoneToken',
+  authToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phoneToken }: { phoneToken: string } = req.body;
+      await User.update({ phoneToken }, { where: { id: req.userId } });
     } catch (e) {
       console.log(e);
       next(e);
@@ -315,13 +340,13 @@ router.get(
 
       if (penaltys.length === 5) {
         return res.json({
-          code: 200,
+          code: 'success',
           payload: penaltys,
           msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
         });
       } else {
         return res.json({
-          code: 202,
+          code: 'last data',
           payload: penaltys,
           msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
         });
@@ -363,13 +388,13 @@ router.get(
 
       if (tweets.length === 5) {
         return res.json({
-          code: 200,
+          code: 'success',
           payload: tweets,
           msg: `회원번호 ${id} 유저의 트윗 목록입니다.`,
         });
       } else {
         return res.json({
-          code: 202,
+          code: 'last data',
           payload: tweets,
           msg: `회원번호 ${id} 유저의 마지막 페이지 트윗 목록입니다.`,
         });
@@ -403,13 +428,13 @@ router.get(
 
       if (prays.length === 5) {
         return res.json({
-          code: 200,
+          code: 'success',
           payload: prays,
           msg: `회원번호 ${id} 유저의 기도제목 목록입니다.`,
         });
       } else {
         return res.json({
-          code: 202,
+          code: 'last data',
           payload: prays,
           msg: `회원번호 ${id} 유저의 마지막 페이지 기도제목 목록입니다.`,
         });

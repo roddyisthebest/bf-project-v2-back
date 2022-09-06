@@ -5,7 +5,7 @@ import { Pray } from './pray';
 import { Service } from './service';
 import { Tweet } from './tweet';
 
-interface UsersAttributes {
+export interface UsersAttributes {
   id: number;
   oauth: string;
   authenticate: boolean;
@@ -14,6 +14,7 @@ interface UsersAttributes {
   password: string | null;
   admin: boolean;
   payed: boolean;
+  phoneToken: string;
   createdAt?: Date;
   updatedAt?: Date;
   [x: string]: any;
@@ -85,6 +86,11 @@ const userInit = (sequelize: Sequelize) => {
         allowNull: true,
         unique: false,
         defaultValue: false,
+      },
+      phoneToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
       },
     },
     {

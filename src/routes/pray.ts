@@ -18,19 +18,12 @@ router.get(
     }
 
     try {
-      const prayList = await User.findAll({
+      const userList = await User.findAll({
         where: lastId === -1 ? {} : where,
         limit: 5,
         attributes: ['id', 'img', 'name'],
         order: [['id', 'DESC']],
         include: [
-          {
-            model: Pray,
-            where: {
-              weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
-            },
-            order: [['id', 'DESC']],
-          },
           {
             model: Service,
             where: {
@@ -40,18 +33,30 @@ router.get(
           },
         ],
       });
-      if (prayList.length === 5) {
+      const filteredPrayList = [...userList];
+      for (let i = 0; i < userList.length; i++) {
+        const prayList = await Pray.findAll({
+          where: {
+            UserId: userList[i].id,
+            weekend: { [Op.eq]: moment().day(0).format('YYYY-MM-DD') },
+          },
+        });
+        filteredPrayList[i].dataValues.Prays = prayList?.length ? prayList : [];
+      }
+
+      if (filteredPrayList.length === 5) {
         return res.json({
-          code: 200,
-          payload: prayList,
+          code: 'success',
+          payload: filteredPrayList,
           msg: `${moment()
             .day(0)
             .format('YYYY-MM-DD')} 기간의 기도제목 목록입니다.`,
         });
       } else {
+        console.log(filteredPrayList);
         return res.json({
-          code: 202,
-          payload: prayList,
+          code: 'last data',
+          payload: filteredPrayList,
           msg: `${moment()
             .day(0)
             .format('YYYY-MM-DD')} 기간의 마지막 기도제목 목록입니다.`,
@@ -92,7 +97,7 @@ router.get(
       });
       if (prayList.length === 5) {
         return res.json({
-          code: 200,
+          code: 'success',
           payload: prayList,
           msg: `${moment()
             .day(0)
@@ -100,7 +105,7 @@ router.get(
         });
       } else {
         return res.json({
-          code: 202,
+          code: 'last data',
           payload: prayList,
           msg: `${moment()
             .day(0)
@@ -126,12 +131,12 @@ router.get(
 
       if (prayList.length !== 0) {
         return res.json({
-          code: 200,
+          code: 'exist',
           msg: `${weekend} 기간의 기도제목이 존재합니다.`,
         });
       } else {
         return res.status(202).json({
-          code: 202,
+          code: 'not exist',
           msg: `${weekend} 기간의 기도제목이 존재하지 않습니다.`,
         });
       }
@@ -153,8 +158,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     if (!user) {
-      return res.status(402).json({
-        code: 402,
+      return res.status(403).json({
+        code: 'forbidden',
         msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
       });
     }
@@ -165,7 +170,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       content,
     });
     return res.json({
-      code: 200,
+      code: 'success',
       msg: '형제자매님의 기도제목이 성공적으로 db에 저장되었으니 기도해주세요.',
       payload: {
         id: pray.id,
@@ -191,14 +196,14 @@ router.put('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     if (!user) {
-      return res.status(402).json({
-        code: 402,
+      return res.status(403).json({
+        code: 'forbidden',
         msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
       });
     }
     await Pray.update({ content }, { where: { id } });
     return res.send({
-      code: 200,
+      code: 'success',
       msg: '유저의 기도제목이 성공적으로 변경되었습니다.',
     });
   } catch (e) {
@@ -213,7 +218,7 @@ router.delete(
     try {
       await Pray.destroy({ where: { id } });
       return res.json({
-        code: 200,
+        code: 'success',
         msg: '해당 기도제목의 삭제가 완료되었습니다!',
       });
     } catch (e) {

@@ -19,20 +19,12 @@ import { Tweet } from './model/tweet';
 import { Op } from 'sequelize';
 import moment from 'moment';
 import schedule from 'node-schedule';
-import { userId } from './middleware/authToken';
 import fs from 'fs';
 import https from 'https';
-
-const HTTP_PORT = 8080;
+const HTTP_PORT = 3000;
 const HTTPS_PORT = 443;
 
-const options = {
-  key: fs.readFileSync('src/localhost-key.pem'),
-  cert: fs.readFileSync('src/localhost.pem'),
-};
-
 const app = express();
-let phoneToken: string = '';
 dotenv.config();
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS =
@@ -65,60 +57,60 @@ app.use('/penalty', authToken, authUser, penaltyRoutes);
 app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
 
-app.post('/phonetoken', (req, res, next) => {
-  phoneToken = req.body.token;
-  console.log(phoneToken);
-  res.send('ok');
-});
-
 const alarm = () =>
-  schedule.scheduleJob('0 0 0 * * SUN', async function () {
-    try {
-      const user = await User.findOne({ where: { id: userId } });
+  schedule.scheduleJob('0 0 0 * * *', async function () {
+    // 푸시 알림 관련 코드 기재
 
-      const alreadyTweet = await Tweet.findOne({
-        where: {
-          UserId: userId,
-          createdAt: {
-            [Op.between]: [
-              moment().format('YYYY-MM-DD 00:00'),
-              moment().format('YYYY-MM-DD 23:59'),
-            ],
-          },
-        },
-      });
-      console.log('예수님의 사랑으로');
-      // 푸시 알림 관련 코드 기재
-      console.log(phoneToken.length);
-      if (phoneToken.length !== 0 && !alreadyTweet) {
-        admin
-          .messaging()
-          .send({
-            token: phoneToken,
-            notification: {
-              title: '매일성경 알림 ⚠️',
-              body: `${user?.name}님 매일성경 게시글을 올려주세요. 30분 남았답니다.`,
-            },
-            android: {
-              notification: {
-                channelId: '기타',
-                vibrateTimingsMillis: [0, 500, 500, 500],
-                priority: 'high',
-                defaultVibrateTimings: false,
+    try {
+      const userList = await User.findAll();
+
+      userList.map(async (e: any) => {
+        try {
+          const alreadyTweet = await Tweet.findOne({
+            where: {
+              UserId: e.id,
+              createdAt: {
+                [Op.between]: [
+                  moment().format('YYYY-MM-DD 00:00'),
+                  moment().format('YYYY-MM-DD 23:59'),
+                ],
               },
             },
-            apns: {
-              payload: {
-                aps: {
-                  sound: 'default',
-                  category: '기타',
+          });
+
+          if (e.phoneToken.length !== 0 && !alreadyTweet) {
+            admin
+              .messaging()
+              .send({
+                token: e.phoneToken,
+                notification: {
+                  title: '매일성경 알림 ⚠️',
+                  body: `${e?.name}님 매일성경 게시글을 올려주세요. 25분 남았답니다.`,
                 },
-              },
-            },
-          })
-          .then((e) => console.log(e))
-          .catch(console.error);
-      }
+                android: {
+                  notification: {
+                    channelId: 'default',
+                    vibrateTimingsMillis: [0, 500, 500, 500],
+                    priority: 'high',
+                    defaultVibrateTimings: false,
+                  },
+                },
+                apns: {
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      category: 'default',
+                    },
+                  },
+                },
+              })
+              .then((e) => console.log(e))
+              .catch(console.error);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      });
     } catch (e) {
       console.log(e);
     }
@@ -138,10 +130,21 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.json({ err });
 });
 
-const server = https.createServer(options, app).listen(HTTPS_PORT);
+const server = app.listen(HTTP_PORT, () => {
+  console.log('running on port 3000');
+});
 
-// const server = app.listen(3000, () => {
-//   console.log('running on port 3000');
-// });
+// const lex = require('greenlock-express').create({
+//  version:'draft-11',
+//  configDir:'/etc/letsencrypt',
+//  server:'https://acme-v02.api.letsencrypt.org/directory',
+//  email:'bsy17171@naver.com',
+//  agreeTos:true,
+//  approvedDomains:['api.bf-church.click'],
+//  renewWithin:81 * 24 * 60 * 60 * 1000,
+//  renewBy:80 * 24 * 60 * 60 * 1000
+//  });
+
+// const server = https.createServer(lex.httpsOptions,lex.middleware(app)).listen(443);
 
 socket(server);
