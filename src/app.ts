@@ -130,21 +130,29 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.json({ err });
 });
 
-const server = app.listen(HTTP_PORT, () => {
-  console.log('running on port 3000');
-});
+let server;
 
-// const lex = require('greenlock-express').create({
-//  version:'draft-11',
-//  configDir:'/etc/letsencrypt',
-//  server:'https://acme-v02.api.letsencrypt.org/directory',
-//  email:'bsy17171@naver.com',
-//  agreeTos:true,
-//  approvedDomains:['api.bf-church.click'],
-//  renewWithin:81 * 24 * 60 * 60 * 1000,
-//  renewBy:80 * 24 * 60 * 60 * 1000
-//  });
+if (process.env.NODE_ENV === 'prod') {
+  const lex = require('greenlock-express').create({
+    version: 'draft-11',
+    configDir: '/etc/letsencrypt',
+    server: 'https://acme-v02.api.letsencrypt.org/directory',
+    email: 'bsy17171@naver.com',
+    agreeTos: true,
+    approvedDomains: ['api.bf-church.click'],
+    renewWithin: 81 * 24 * 60 * 60 * 1000,
+    renewBy: 80 * 24 * 60 * 60 * 1000,
+  });
 
-// const server = https.createServer(lex.httpsOptions,lex.middleware(app)).listen(443);
+  server = https
+    .createServer(lex.httpsOptions, lex.middleware(app))
+    .listen(HTTPS_PORT, () => {
+      console.log(`running on port ${HTTPS_PORT}`);
+    });
+} else {
+  server = app.listen(HTTP_PORT, () => {
+    console.log(`running on port ${HTTP_PORT}`);
+  });
+}
 
 socket(server);
