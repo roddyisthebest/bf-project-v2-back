@@ -1,15 +1,16 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import { Penalty } from '../model/penalty';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { Service } from '../model/service';
+import { UserIdRequest } from '../types/userIdRequest';
 
 const router = express.Router();
 
 router.get(
   '/:lastId',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const where = { id: {} };
       const lastId = parseInt(req.params.lastId, 10);

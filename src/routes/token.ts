@@ -1,21 +1,22 @@
 import axios from 'axios';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import { authToken } from '../middleware/authToken';
 import { authUser } from '../middleware/authUser';
+import { UserIdRequest } from '../types/userIdRequest';
 const router = express.Router();
 
 router.post(
   '/authenticate',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     return res.send({ msg: 'accessToken이 유효합니다.', id: req.userId });
   }
 );
 
 router.post(
   '/refresh',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const { refreshToken, phoneToken } = req.body;
       const { data } = await axios.post(

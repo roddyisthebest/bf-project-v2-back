@@ -1,16 +1,17 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { Pray } from '../model/pray';
 import sanitizeHtml from 'sanitize-html';
 import { Service } from '../model/service';
+import { UserIdRequest } from '../types/userIdRequest';
 
 const router = express.Router();
 
 router.get(
   '/:lastId',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const where = { id: {}, admin: { [Op.not]: true } };
     const lastId = parseInt(req.params.lastId, 10);
     if (lastId !== -1) {
@@ -71,7 +72,7 @@ router.get(
 
 router.get(
   '/:lastId/weekend/:weekend',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { weekend } = req.params;
     const where = { id: {}, admin: { [Op.not]: true } };
 
@@ -121,7 +122,7 @@ router.get(
 
 router.get(
   '/weekend/:weekend/check',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { weekend } = req.params;
     try {
       const prayList = await Pray.findAll({
@@ -147,73 +148,79 @@ router.get(
   }
 );
 
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  const { content: pureContent, id } = req.body;
-  const content = sanitizeHtml(pureContent);
+router.post(
+  '/',
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
+    const { content: pureContent, id } = req.body;
+    const content = sanitizeHtml(pureContent);
 
-  try {
-    const user: any = await User.findOne({
-      where: { id },
-      include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
-    });
-
-    if (!user) {
-      return res.status(403).json({
-        code: 'forbidden',
-        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+    try {
+      const user: any = await User.findOne({
+        where: { id },
+        include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
       });
-    }
 
-    const pray: any = await Pray.create({
-      UserId: user.id,
-      weekend: moment().day(0).format('YYYY-MM-DD'),
-      content,
-    });
-    return res.json({
-      code: 'success',
-      msg: '형제자매님의 기도제목이 성공적으로 db에 저장되었으니 기도해주세요.',
-      payload: {
-        id: pray.id,
-        weekend: pray.weekend,
-        content: pray.content,
-      },
-    });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-});
+      if (!user) {
+        return res.status(403).json({
+          code: 'forbidden',
+          msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+        });
+      }
 
-router.put('/', async (req: Request, res: Response, next: NextFunction) => {
-  const { id, content: pureContent, userId } = req.body;
-  console.log(req.body);
-  const content = sanitizeHtml(pureContent);
-
-  try {
-    const user: any = await User.findOne({
-      where: { id: userId },
-      include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
-    });
-
-    if (!user) {
-      return res.status(403).json({
-        code: 'forbidden',
-        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+      const pray: any = await Pray.create({
+        UserId: user.id,
+        weekend: moment().day(0).format('YYYY-MM-DD'),
+        content,
       });
+      return res.json({
+        code: 'success',
+        msg: '형제자매님의 기도제목이 성공적으로 db에 저장되었으니 기도해주세요.',
+        payload: {
+          id: pray.id,
+          weekend: pray.weekend,
+          content: pray.content,
+        },
+      });
+    } catch (e) {
+      console.log(e);
+      next(e);
     }
-    await Pray.update({ content }, { where: { id } });
-    return res.send({
-      code: 'success',
-      msg: '유저의 기도제목이 성공적으로 변경되었습니다.',
-    });
-  } catch (e) {
-    next(e);
   }
-});
+);
+
+router.put(
+  '/',
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
+    const { id, content: pureContent, userId } = req.body;
+    console.log(req.body);
+    const content = sanitizeHtml(pureContent);
+
+    try {
+      const user: any = await User.findOne({
+        where: { id: userId },
+        include: [{ model: Service, where: { pray: { [Op.ne]: false } } }],
+      });
+
+      if (!user) {
+        return res.status(403).json({
+          code: 'forbidden',
+          msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+        });
+      }
+      await Pray.update({ content }, { where: { id } });
+      return res.send({
+        code: 'success',
+        msg: '유저의 기도제목이 성공적으로 변경되었습니다.',
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
 
 router.delete(
   '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
       await Pray.destroy({ where: { id } });

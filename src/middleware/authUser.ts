@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { User } from '../model/user';
+import { UserIdRequest } from '../types/userIdRequest';
 
 export const authUser = async (
-  req: Request,
+  req: UserIdRequest,
   res: Response,
   next: NextFunction
 ) => {

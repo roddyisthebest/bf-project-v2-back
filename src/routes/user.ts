@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import axios from 'axios';
 import userInfoType from '../types/userInfo';
 import { User } from '../model/user';
@@ -10,11 +10,12 @@ import { Tweet } from '../model/tweet';
 import { authId } from '../middleware/authId';
 import { authUser } from '../middleware/authUser';
 import { Pray } from '../model/pray';
+import { UserIdRequest } from '../types/userIdRequest';
 const router = express.Router();
 
 router.get(
   '/auth/kakao/callback',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const { data } = await axios.post(
         `https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id=${process.env.REST_API_KEY}&&redirect_uri=${process.env.REDIRECT_URI}&code=${req.query.code}`
@@ -85,7 +86,7 @@ router.post(
   '/logout',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       await axios.post(
         `https://kapi.kakao.com/v1/user/logout`,
@@ -110,7 +111,7 @@ router.get(
   '/:id/info',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
       const user = await User.findOne({
@@ -144,7 +145,7 @@ router.get(
   '/',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       console.log(req.userId);
       const user = await User.findOne({
@@ -182,7 +183,7 @@ router.get(
 router.post(
   '/auth/code',
   authToken,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { code }: { code: string } = req.body;
     console.log(code);
     try {
@@ -208,7 +209,7 @@ router.put(
   '/',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { name } = req.body;
     try {
       await User.update({ name }, { where: { id: req.userId } });
@@ -226,7 +227,7 @@ router.put(
   '/service',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const {
       tweet,
       pray,
@@ -251,7 +252,7 @@ router.post(
   '/follow',
   authToken,
   authUser,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { isFollow, id } = req.body;
     console.log(isFollow, id);
     try {
@@ -287,7 +288,7 @@ router.post(
 router.post(
   '/check',
   authToken,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { id, payed }: { id: number; payed: boolean } = req.body;
     try {
       console.log(payed);
@@ -306,7 +307,7 @@ router.post(
 router.post(
   '/phoneToken',
   authToken,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const { phoneToken }: { phoneToken: string } = req.body;
       await User.update({ phoneToken }, { where: { id: req.userId } });
@@ -322,7 +323,7 @@ router.get(
   authToken,
   authUser,
   authId,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
 
     try {
@@ -363,7 +364,7 @@ router.get(
   authToken,
   authUser,
   authId,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
     const lastId = parseInt(lstId, 10);
 
@@ -411,7 +412,7 @@ router.get(
   authToken,
   authUser,
   authId,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
     const lastId = parseInt(lstId, 10);
     try {

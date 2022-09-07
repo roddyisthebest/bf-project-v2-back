@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import { Penalty } from '../model/penalty';
 import { User } from '../model/user';
 import { Op } from 'sequelize';
@@ -12,6 +12,7 @@ import sanitizeHtml from 'sanitize-html';
 import { Tweet } from '../model/tweet';
 import userType from '../types/user';
 import { Service } from '../model/service';
+import { UserIdRequest } from '../types/userIdRequest';
 const router = express.Router();
 
 try {
@@ -37,7 +38,7 @@ const upload = multer({
 router.post(
   '/',
   upload.single('img'),
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     console.log('wow!');
     try {
       const user: any = await User.findOne({
@@ -116,7 +117,7 @@ router.post(
 
 router.get(
   '/:lastId',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const where = { id: {} };
       const lastId = parseInt(req.params.lastId, 10);
@@ -149,7 +150,7 @@ router.get(
 
 router.delete(
   '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
       const tweet: any = await Tweet.findOne({

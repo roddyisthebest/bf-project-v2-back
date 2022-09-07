@@ -1,5 +1,6 @@
 import axios from 'axios';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
+import { UserIdRequest } from './types/userIdRequest';
 import { authToken } from '../src/middleware/authToken';
 import { authUser } from './middleware/authUser';
 import { sequelize } from './model';
@@ -47,7 +48,7 @@ sequelize
   });
 
 update();
-app.get('/', (req: Request, res: Response, next: NextFunction) => {
+app.get('/', (req: UserIdRequest, res: Response, next: NextFunction) => {
   console.log(req.secure);
   return res.status(200).json({ message: 'hello' });
 });
@@ -58,7 +59,7 @@ app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
 
 const alarm = () =>
-  schedule.scheduleJob('0 0 0 * * *', async function () {
+  schedule.scheduleJob('0 * * * * *', async function () {
     // 푸시 알림 관련 코드 기재
 
     try {
@@ -123,7 +124,7 @@ app.use((req, res, next) => {
   next(error);
 });
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: UserIdRequest, res: Response, next: NextFunction) => {
   res.locals.message = err.message;
   res.locals.error = process.env.NODE_ENV !== 'prod' ? err : {};
   res.status(500);
