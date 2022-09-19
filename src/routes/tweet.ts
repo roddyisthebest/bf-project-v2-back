@@ -84,7 +84,7 @@ router.post(
         },
       });
 
-      if (alreadyTweet) {
+      if (false) {
         fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
         if (error) {
           return res

@@ -8,6 +8,7 @@ import { Tweet } from './tweet';
 export interface UsersAttributes {
   id: number;
   oauth: string;
+  userId: string;
   authenticate: boolean;
   name: string;
   img: string;
@@ -48,6 +49,11 @@ const userInit = (sequelize: Sequelize) => {
         type: DataTypes.INTEGER.UNSIGNED,
         autoIncrement: false,
         primaryKey: true,
+      },
+      userId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: false,
       },
       oauth: {
         type: DataTypes.STRING,
@@ -90,7 +96,7 @@ const userInit = (sequelize: Sequelize) => {
       phoneToken: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
+        unique: false,
       },
     },
     {

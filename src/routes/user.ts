@@ -1,4 +1,4 @@
-import express, { Response, NextFunction } from 'express';
+import express, { Response, NextFunction, Request } from 'express';
 import axios from 'axios';
 import userInfoType from '../types/userInfo';
 import { User } from '../model/user';
@@ -11,6 +11,10 @@ import { authId } from '../middleware/authId';
 import { authUser } from '../middleware/authUser';
 import { Pray } from '../model/pray';
 import { UserIdRequest } from '../types/userIdRequest';
+import bcrypt from 'bcrypt';
+import md5 from 'md5';
+import jwt from 'jsonwebtoken';
+import { generateAccessToken, generateRefreshToken } from '../app';
 const router = express.Router();
 
 router.get(
@@ -93,7 +97,7 @@ router.post(
         {},
         {
           headers: {
-            Authorization: `${req.headers.authorization}`,
+            Authorization: `Bearer ${req.headers.authorization}`,
           },
         }
       );
@@ -102,6 +106,108 @@ router.post(
         .json({ msg: '성공적으로 로그아웃 되었습니다.', code: 'success' });
     } catch (e) {
       console.log(e);
+      next(e);
+    }
+  }
+);
+
+router.post(
+  '/localSignUp',
+  async (req: UserIdRequest, res: Response, next: NextFunction) => {
+    const { userId, password, name } = req.body;
+    try {
+      const exUser = await User.findOne({
+        where: {
+          [Op.or]: [{ userId }, { name }],
+        },
+      });
+
+      if (exUser) {
+        return res.status(403).json({
+          code: 'invalid authentication',
+          message: '이미 회원가입 되었거나 이름이 중복된 유저가 존재합니다.',
+        });
+      }
+
+      const hash = await bcrypt.hash(password, 12);
+      const user = await User.create({
+        userId,
+        password: hash,
+        name,
+        img: `https://s.gravatar.com/avatar/${md5(userId)}?s=32&d=retro`,
+        oauth: 'test',
+        admin: 1,
+        id: 99999999,
+        authenticate: true,
+      });
+      await Service.create({
+        UserId: user.id,
+        pray: false,
+        penalty: false,
+        tweet: false,
+      });
+
+      let accessToken = generateAccessToken(user.id);
+      let refreshToken = generateRefreshToken(user.id);
+
+      return res.json({
+        msg: `${user.name}님 성공적으로 회원등록 되었습니다.`,
+        payload: {
+          token: {
+            accessToken,
+            refreshToken,
+          },
+          userInfo: {
+            ...user.dataValues,
+          },
+        },
+      });
+    } catch (e) {
+      return next(e);
+    }
+  }
+);
+
+router.post(
+  '/localSignIn',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { userId, password } = req.body;
+    try {
+      const exUser = await User.findOne({
+        where: { userId },
+      });
+      if (exUser) {
+        const result = await bcrypt.compare(password, exUser.password);
+        let accessToken = generateAccessToken(exUser.id);
+        let refreshToken = generateRefreshToken(exUser.id);
+
+        if (result) {
+          exUser.dataValues.password = null;
+          return res.status(200).json({
+            msg: `${exUser.name}님 안녕하세요!`,
+            payload: {
+              token: {
+                accessToken,
+                refreshToken,
+              },
+              user: {
+                ...exUser.dataValues,
+              },
+            },
+          });
+        } else {
+          return res.status(403).json({
+            code: 'invalid local authentication',
+            msg: '올바르지 않은 비밀번호입니다.',
+          });
+        }
+      } else {
+        return res.status(403).json({
+          code: 'invalid local authentication',
+          msg: '가입되지 않은 회원입니다.',
+        });
+      }
+    } catch (e) {
       next(e);
     }
   }
@@ -310,6 +416,7 @@ router.post(
   async (req: UserIdRequest, res: Response, next: NextFunction) => {
     try {
       const { phoneToken }: { phoneToken: string } = req.body;
+
       await User.update({ phoneToken }, { where: { id: req.userId } });
     } catch (e) {
       console.log(e);
@@ -322,7 +429,6 @@ router.get(
   '/:id/penaltys/:lastId',
   authToken,
   authUser,
-  authId,
   async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
 
@@ -363,7 +469,6 @@ router.get(
   '/:id/tweets/:lastId',
   authToken,
   authUser,
-  authId,
   async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
     const lastId = parseInt(lstId, 10);
@@ -411,7 +516,6 @@ router.get(
   '/:id/prays/:lastId',
   authToken,
   authUser,
-  authId,
   async (req: UserIdRequest, res: Response, next: NextFunction) => {
     const { lastId: lstId, id } = req.params;
     const lastId = parseInt(lstId, 10);

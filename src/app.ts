@@ -20,7 +20,7 @@ import { Tweet } from './model/tweet';
 import { Op } from 'sequelize';
 import moment from 'moment';
 import schedule from 'node-schedule';
-import fs from 'fs';
+import jwt from 'jsonwebtoken';
 import https from 'https';
 const HTTP_PORT = 3000;
 const HTTPS_PORT = 443;
@@ -59,7 +59,7 @@ app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
 
 const alarm = () =>
-  schedule.scheduleJob('0 * * * * *', async function () {
+  schedule.scheduleJob('0 30 23 * * *', async function () {
     // 푸시 알림 관련 코드 기재
 
     try {
@@ -86,7 +86,7 @@ const alarm = () =>
                 token: e.phoneToken,
                 notification: {
                   title: '매일성경 알림 ⚠️',
-                  body: `${e?.name}님 매일성경 게시글을 올려주세요. 25분 남았답니다.`,
+                  body: `${e?.name}님 매일성경 게시글을 올려주세요. 30분 남았답니다.`,
                 },
                 android: {
                   notification: {
@@ -157,3 +157,17 @@ if (process.env.NODE_ENV === 'prod') {
 }
 
 socket(server);
+
+const generateAccessToken = (id: number) => {
+  return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET as string, {
+    expiresIn: '1 days',
+  });
+};
+
+const generateRefreshToken = (id: number) => {
+  return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET as string, {
+    expiresIn: '180 days',
+  });
+};
+
+export { generateAccessToken, generateRefreshToken };
