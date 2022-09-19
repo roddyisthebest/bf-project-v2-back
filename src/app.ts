@@ -1,6 +1,5 @@
 import axios from 'axios';
 import express, { Response, NextFunction } from 'express';
-import { UserIdRequest } from './types/userIdRequest';
 import { authToken } from '../src/middleware/authToken';
 import { authUser } from './middleware/authUser';
 import { sequelize } from './model';
@@ -48,7 +47,7 @@ sequelize
   });
 
 update();
-app.get('/', (req: UserIdRequest, res: Response, next: NextFunction) => {
+app.get('/', (req: any, res: Response, next: NextFunction) => {
   console.log(req.secure);
   return res.status(200).json({ message: 'hello' });
 });
@@ -124,7 +123,7 @@ app.use((req, res, next) => {
   next(error);
 });
 
-app.use((err: Error, req: UserIdRequest, res: Response, next: NextFunction) => {
+app.use((err: Error, req: any, res: Response, next: NextFunction) => {
   res.locals.message = err.message;
   res.locals.error = process.env.NODE_ENV !== 'prod' ? err : {};
   res.status(500);

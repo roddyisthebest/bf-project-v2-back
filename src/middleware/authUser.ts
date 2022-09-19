@@ -1,13 +1,8 @@
 import axios from 'axios';
 import { Response, NextFunction } from 'express';
 import { User } from '../model/user';
-import { UserIdRequest } from '../types/userIdRequest';
 
-export const authUser = async (
-  req: UserIdRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const authUser = async (req: any, res: Response, next: NextFunction) => {
   if (req.userId !== parseInt(req.params.id, 10)) {
     const user = await User.findOne({
       where: { id: req.userId },

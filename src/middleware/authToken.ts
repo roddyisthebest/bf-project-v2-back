@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { Response, NextFunction } from 'express';
-import { UserIdRequest } from '../types/userIdRequest';
 import jwt from 'jsonwebtoken';
 export const authToken = async (
-  req: UserIdRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {

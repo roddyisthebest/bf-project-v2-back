@@ -12,7 +12,6 @@ import sanitizeHtml from 'sanitize-html';
 import { Tweet } from '../model/tweet';
 import userType from '../types/user';
 import { Service } from '../model/service';
-import { UserIdRequest } from '../types/userIdRequest';
 const router = express.Router();
 
 try {
@@ -38,7 +37,7 @@ const upload = multer({
 router.post(
   '/',
   upload.single('img'),
-  async (req: UserIdRequest, res: Response, next: NextFunction) => {
+  async (req: any, res: Response, next: NextFunction) => {
     console.log('wow!');
     try {
       const user: any = await User.findOne({
@@ -115,79 +114,73 @@ router.post(
   }
 );
 
-router.get(
-  '/:lastId',
-  async (req: UserIdRequest, res: Response, next: NextFunction) => {
-    try {
-      const where = { id: {} };
-      const lastId = parseInt(req.params.lastId, 10);
+router.get('/:lastId', async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const where = { id: {} };
+    const lastId = parseInt(req.params.lastId, 10);
 
-      if (lastId !== -1) {
-        where.id = { [Op.lt]: lastId };
+    if (lastId !== -1) {
+      where.id = { [Op.lt]: lastId };
+    }
+
+    const tweets = await Tweet.findAll({
+      where: lastId === -1 ? {} : where,
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
+    });
+    if (tweets.length === 5) {
+      return res.json({ code: 'success', payload: tweets });
+    } else {
+      return res.json({
+        code: 'last data',
+        payload: tweets,
+        msg: '마지막 page의 게시글 목록 입니다.',
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+});
+
+router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  try {
+    const tweet: any = await Tweet.findOne({
+      where: { id },
+      include: [{ model: User, attributes: ['id'] }],
+    });
+
+    const user: userType = tweet?.User;
+
+    var error = false;
+
+    if (req.userId === (user.id as number)) {
+      await Tweet.destroy({ where: { id } });
+      if (tweet.img.length != 0) {
+        fs.unlink(tweet?.img.replace('img', 'uploads'), (err) =>
+          err ? (error = true) : console.log('good')
+        );
       }
 
-      const tweets = await Tweet.findAll({
-        where: lastId === -1 ? {} : where,
-        limit: 5,
-        order: [['createdAt', 'DESC']],
-        include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
-      });
-      if (tweets.length === 5) {
-        return res.json({ code: 'success', payload: tweets });
-      } else {
+      if (!error) {
         return res.json({
-          code: 'last data',
-          payload: tweets,
-          msg: '마지막 page의 게시글 목록 입니다.',
+          code: 'success',
+          message: '해당 트윗의 삭제가 완료되었습니다!',
         });
-      }
-    } catch (e) {
-      console.error(e);
-      next(e);
-    }
-  }
-);
-
-router.delete(
-  '/:id',
-  async (req: UserIdRequest, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    try {
-      const tweet: any = await Tweet.findOne({
-        where: { id },
-        include: [{ model: User, attributes: ['id'] }],
-      });
-
-      const user: userType = tweet?.User;
-
-      var error = false;
-
-      if (req.userId === (user.id as number)) {
-        await Tweet.destroy({ where: { id } });
-        if (tweet.img.length != 0) {
-          fs.unlink(tweet?.img.replace('img', 'uploads'), (err) =>
-            err ? (error = true) : console.log('good')
-          );
-        }
-
-        if (!error) {
-          return res.json({
-            code: 'success',
-            message: '해당 트윗의 삭제가 완료되었습니다!',
-          });
-        } else {
-          return res.status(404).send({ code: 'not found', msg: error });
-        }
       } else {
-        return res
-          .status(403)
-          .json({ code: 'forbidden', msg: '권한이 없습니다. 꺼지세요' });
+        return res.status(404).send({ code: 'not found', msg: error });
       }
-    } catch (e) {
-      console.error(e);
-      next(e);
+    } else {
+      return res
+        .status(403)
+        .json({ code: 'forbidden', msg: '권한이 없습니다. 꺼지세요' });
     }
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
-);
+});
 
 export default router;
